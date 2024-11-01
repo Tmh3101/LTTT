@@ -59,7 +59,9 @@ class Student(Human):
             xeploai = 'Loai Kha'
         else:
             xeploai = 'Loai Gioi'
-        print(f'Sinh vien {self.hoTen} co MSSV la {self.mssv} voi diem trung binh la {self.diemTB} duoc xep loai la {xeploai}')
+
+        return xeploai
+        
 
 # Câu 4;
 def cau04():
@@ -76,10 +78,10 @@ def cau04():
 
     for i in range(0, len(student_list)):
         student_list[i].getInfo()
-        student_list[i].rank()
+        print(f'Sinh vien {student_list[i].hoTen} co MSSV la {student_list[i].mssv} voi diem trung binh la {student_list[i].diemTB} duoc xep loai la {student_list[i].rank()}')
 
-# Câu 5:
-def cau05():
+
+def createStudent():
     hoTen = input('Nhap ho ten: ')
     while len(hoTen) > 25:
         hoTen = input('Ho ten khong vuot qua 25 ky tu!, nhap lai: ')
@@ -106,10 +108,157 @@ def cau05():
     while not 0 <= diemTB <= 10:
         diemTB = float(input('Diem trung binh khong hop le (0 <= DTB <= 10), nhap lai: '))
     
-    student = Student(hoTen, namSinh, queQuan, mssv, nganh, diemTB)
+    return Student(hoTen, namSinh, queQuan, mssv, nganh, diemTB)
+
+# Câu 5:
+def cau05():
+    student = createStudent()
     student.getInfo()
 
+def printStudentListInfo(student_list):
+    for i in range(0, len(student_list)):
+        print('----------------------------------------------------------------------------------------------------------')
+        print(f'\t\t\t\t\t\tSinh Vien {i + 1}')
+        print('----------------------------------------------------------------------------------------------------------')
+        print(f'Ho ten: {student_list[i].hoTen}')
+        print(f'Nam sinh: {student_list[i].namSinh}')
+        print(f'Que quan: {student_list[i].queQuan}')
+        print(f'MSSV: {student_list[i].mssv}')
+        print(f'Nganh hoc: {student_list[i].nganh}')
+        print(f'Diem trung binh: {student_list[i].diemTB}')
+        print(f'Xep loai: {student_list[i].rank()}')
 
-cau05()
+def cau06():
+    n = int(input('Nhap so luong sinh vien: '))
+    student_list = []
+    for i in range(0, n):
+        print(f'Nhap thong tin cho sinh vien thu {i + 1}: ')
+        student_list.append(createStudent())
+
+    printStudentListInfo(student_list)
 
 
+class Node():
+    def __init__(self, probability, symbol, left=None, right=None):
+        self.probability = probability
+        self.symbol = symbol
+        self.left = left
+        self.right = right
+        self.code = ''
+    
+def CalculateProbability(data):
+    dict = {}
+    for c in data:
+        if c in dict:
+            dict[c] += 1
+        else:
+            dict[c] = 1 
+
+    return dict
+
+the_codes = {}
+def CalculateCodes(node, value = ''):
+    # a huffman code for current node
+    newValue = value + str(node.code)
+    
+    if (node.left):
+        CalculateCodes(node.left, newValue)
+    if (node.right):
+        CalculateCodes(node.right, newValue)
+    
+    if (not node.left and not node.right):
+        the_codes[node.symbol] = newValue
+
+    return the_codes
+
+""" A supporting function in order to get the encoded result """
+def OutputEncoded(the_data, coding):
+    encodingOutput = []
+    for element in the_data:
+        # print(coding[element], end='')
+        encodingOutput.append(coding[element])
+    
+    the_string = ''.join([str(item) for item in encodingOutput])
+    return the_string
+
+""" A supporting function in order to calculate the space difference between compressed and non-compressed data """
+def TotalGain(the_data, coding):
+    # total bit space to store the data before compression
+    beforeCompression = len(the_data) * 8
+    afterCompression = 0
+    the_symbols = coding.keys()
+    
+    for symbol in the_symbols:
+        the_count = the_data.count(symbol)
+        # calculating how many bit is required for that symbol in total
+        afterCompression += the_count * len(coding[symbol])
+    
+    print("Space usage before compression (in bits):", beforeCompression)
+    print("Space usage after compression (in bits):", afterCompression)
+
+def HuffmanEncoding(the_data):
+    symbolWithProbs = CalculateProbability(the_data)
+    the_symbols = symbolWithProbs.keys()
+    the_probabilities = symbolWithProbs.values()
+    
+    print("symbols: ", the_symbols)
+    print("probabilities: ", the_probabilities)
+    
+    the_nodes = []
+    
+    # converting symbols and probabilities into huffman tree nodes
+    for symbol in the_symbols:
+        the_nodes.append(Node(symbolWithProbs.get(symbol), symbol))
+    
+    while len(the_nodes) > 1:
+        # sorting all the nodes in ascending order based on their probability
+        the_nodes = sorted(the_nodes, key=lambda x: x.probability)
+        
+        # picking two smallest nodes
+        right = the_nodes[0]
+        left = the_nodes[1]
+        
+        left.code = 0
+        right.code = 1
+        
+        # combining the 2 smallest nodes to create new node
+        newNode = Node(left.probability + right.probability, left.symbol + right.symbol, left, right)
+        
+        the_nodes.remove(left)
+        the_nodes.remove(right)
+        the_nodes.append(newNode)
+    
+    huffmanEncoding = CalculateCodes(the_nodes[0])
+    print("symbols with codes: ", huffmanEncoding)
+    TotalGain(the_data, huffmanEncoding)
+    encodedOutput = OutputEncoded(the_data, huffmanEncoding)
+    
+    return encodedOutput, the_nodes[0]
+
+def HuffmanDecoding(encodedData, huffmanTree):
+    treeHead = huffmanTree
+    decodedOutput = []
+    
+    for x in encodedData:
+        if x == '1':
+            huffmanTree = huffmanTree.right
+        elif x == '0':
+            huffmanTree = huffmanTree.left
+        
+        try:
+            if huffmanTree.left.symbol == None and huffmanTree.right.symbol == None:
+                pass
+        except AttributeError:
+            decodedOutput.append(huffmanTree.symbol)
+            huffmanTree = treeHead
+    
+    string = ''.join([str(item) for item in decodedOutput])
+    return string
+
+the_data = 'AAAAAAABBCCCCCCDDDEEEEEEEEE'
+output, node =  HuffmanEncoding(the_data)
+print('Output:', output)
+print('Root of huffman tree:', node.symbol)
+print('===Deconding===')
+data = HuffmanDecoding(output, node)
+print(data)
